@@ -193,11 +193,11 @@ To solve this, we'll use a fastbin attack to overlap a string chunk with a messa
 
 Essentially, when we free a chunk, it first frees our plaintext, and then the ciphertext.
 
-Initially, my idea was to overwrite `fd` of  in the `bss` segment using the `stdin` pointer to pass the size check of `malloc()`. This would let us corrupt the `information` array with our arbitrary pointers. However, this failed from a combination of three reasons:
+Initially, my idea was to overwrite `fd` of the freed chunk to the `bss` segment using the `stdin` pointer to pass the size check of `malloc()`. This would let us corrupt the `information` array with our arbitrary pointers. However, this failed from a combination of three reasons:
 
 1. The free list is `old encrypted -> faked chunk`, meaning our new encrypted string will be the faked chunk.
 2. Although it's easy to calculate what our string will be after the encryption, both encrypt functions use the `strlen` of the newly allocated chunk instead of the new plaintext like it should. Thus, `strlen` will almost always return 0, with a few exceptions such as when we corrupt `fd` of the free list.
-3. When creating new messages, the program will only allocate new memory if the index is 0. Thus, we cannot use the message struct to get our plaintext to be the our arbitrary chunk without losing the use-after-free vulnerability, making our attack useless.
+3. When creating new messages, the program will only allocate new memory if the address at the index is null. Thus, we cannot use the message struct to get our plaintext to be the our arbitrary chunk without losing the use-after-free vulnerability, making our attack useless.
 
 Because our use-after-free has no leaks, we instead turn to our best friend: partial overwrites!
 
