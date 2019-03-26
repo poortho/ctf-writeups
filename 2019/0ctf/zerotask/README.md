@@ -67,7 +67,7 @@ __int64 __fastcall read_wrapper(__int64 a1, unsigned int a2)
 }
 ```
 
-It actually reads our input character by character! We can use this to update `data_length` without updating `data`! (Actually, now that I'm making this writeup, this doesn't even matter - we could just not give any input at all. Oops.)
+It actually reads our input character by character! We can use this to update `data_length` without updating `data` fully! (Actually, now that I'm making this writeup, this doesn't even matter - we could just not give any input at all. Oops.)
 
 Thus, our plan is as follows:
 1. Create a task
@@ -82,7 +82,7 @@ But now, how do we get control of the program?
 For this, we need to look into a little how the libcrypto struct works.
 
 Looking at our memory, we have
-```
+```asm
 0x555555758270:	0x0000000000000000	0x0000000000000081 <- task struct that we created
 0x555555758280:	0x00005555557584c0	0x0000000000000010 <- pointer to data and length of data
 0x555555758290:	0x0000000000000001	0x0000000000000000 <- check if task is to encrypt or decrypt
@@ -278,4 +278,4 @@ When the task runs, it should jump to one_gadget and we have a shell!
 
 And thus, we have our flag: `flag{pl4y_w1th_u4F_ev3ryDay_63a9d2a26f275685665dc02b886b530e}`
 
-Full solve script [here](./zerotask.py)
+Full solve script [here](./zerotask.py).
