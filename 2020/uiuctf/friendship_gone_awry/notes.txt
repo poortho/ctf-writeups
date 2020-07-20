@@ -1,0 +1,25 @@
+implant crypto
+
+generate pub/priv keypair (box_::curve25519xsalsa20poly1305) on implant
+send implant's pub key and nonce to server
+generate pub/priv keypair on server
+send server's pub key and nonce to implant
+generate sym key/nonce on server
+send sym key/nonce to server encrypted with box_
+zero out priv key in pub/priv keypair in memory for security
+use sym key/nonce for future messages (reuse nonce)
+
+implant design
+
+local struct used for debugging (not sending)
+#[repr(C)] 
+struct version_key_struct {
+    version: String,
+    key: [u8; secretbox::xsalsa20poly1305::KEYBYTES],
+    nonce: [u8; secretbox::xsalsa20poly1305::NONCEBYTES],
+}
+
+version string should start with "Version: "
+
+todo:
+review messages.proto
