@@ -188,7 +188,7 @@ There's probably something else in the evidence that tells us how to use this. L
 
 Looking at the mp3 file, there doesn't appear to be anything interesting except the audio itself.
 
-The audio is a person speaking, presumably the "attacker" in this case. Here's a transcript of what he says :
+The audio is a person speaking, presumably the victim in this case. Here's a transcript of what he says :
 
 ```a
 Hmm... what should I set my password to?
@@ -220,7 +220,7 @@ This is a secrets log file, meaning we can use it to decrypt the SSL traffic! In
 
 First, let's look through the HTTP files through **File -> Export Objects -> HTTP**. Here, we see a lot of host names - some websites for SSL stuff, and some other weird domains such as `tharbadir.com` and `nativepu.sh`. Out of all of these, however, one site in particular pops out: `anotepad.com`.
 
-We see that the attacker creates a note at `https://anotepad.com/notes/54dsnxwy`. Unfortunately, when we try to visit it, it looks like it's been deleted. I spent some time trying to figure out what to do.
+We see that the victim creates a note at `https://anotepad.com/notes/54dsnxwy`. Unfortunately, when we try to visit it, it looks like it's been deleted. I spent some time trying to figure out what to do.
 
 Of course, it turns out this was another pepega moment, because the pcap itself has a GET request for the note! We then extract the file, yielding [wordlist.html](./wordlist.html).
 
