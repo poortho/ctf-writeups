@@ -164,7 +164,7 @@ f.write(sxor(data, keystream))
 f.close()
 ```
 
-With this new script, we can perform decryption of a truncated plaintext. Notably, if we decrypt the first few bytes of a ciphertext block, we can check to see if it is a valid protobuf header, and if so, we can find the length of the entire ciphertext using [protobuf-inspector](https://github.com/mildsunrise/protobuf-inspector), which will tell us the length of the full ciphertext. You'll have to modify the source code right before the failed assertion to have it print out the length. I made the assumption that a ciphertext block would only start at the beginning of a packet, which turned out to be correct.
+With this new script, we can perform decryption of a truncated plaintext. Notably, if we decrypt the first few bytes of a ciphertext block (which I correctly assumed would only start at the beginning of the packet), we can check to see if it is a valid protobuf header, and if so, we can find the length of the entire ciphertext using [protobuf-inspector](https://github.com/mildsunrise/protobuf-inspector), which will tell us the length of the full ciphertext. You'll have to modify the source code right before the failed assertion to have it print out the length.
 
 By doing so, we find three more interesting ciphertext blobs: one starting at packet 13, one starting at packet 97, and another starting at packet 387.
 
