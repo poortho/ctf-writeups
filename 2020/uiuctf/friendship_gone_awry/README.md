@@ -16,7 +16,7 @@ Author: DrDinosaur
 
 ## Solution
 
-Oh boy... this challenge was a wild ride. The challenge author, DrDinosaur, told me to make sure to solve his challenge, and I'm glad to say that I did... although not without way too many missteps - or, as he would say, pepega moments, especially later on in the challenge.
+Oh boy... this challenge was a wild ride. The challenge author, DrDinosaur, told me to make sure to solve his challenge, and I'm glad to say that I did... although not without many, many mistakes, especially later on in the challenge.
 
 ### Notes
 
@@ -56,7 +56,7 @@ This file, although short, provides us with a lot amount of information.
 2. In contrast, the symmetric key crypto is what we're interested in. We know that the nonce is reused, and that the symmetric key is likely still in the memory dump.
 3. From the given struct, we see that the implant is written in Rust. Furthermore, we see that the symmetric key crypto algorithm is `secretbox`. A quick google reveals that the key is 32 bytes and the nonce is 24 bytes.
 4. We are given that the version string starts with `"Version: "`, which is in the struct. We can use this to find the symmetric key in the memory dump.
-5. The notes mention `message.proto`, which likely means that the pcapng likely uses protobufs to communicate.
+5. The notes mention `message.proto`, which likely means that the pcap likely uses protobufs to communicate.
 
 ### Memory dump
 
@@ -72,9 +72,9 @@ key: `6B4C397D6D9E3F5E20D0B33B594C57AC03E5A42CFD432B71D43F8772F3F23381`
 
 nonce: `F228B1C1C5ED37509726BE5FF8A87D3A05258D0235013BF7`
 
-### Pcap
+### PCAP
 
-By now, you're probably wondering where these pepega moments are, right? Everything seems pretty easy so far.
+By now, you're probably wondering why this challenge is hard, right? Everything seems pretty easy so far.
 
 Well, here's where it starts.
 
@@ -82,7 +82,7 @@ Opening up the pcap, we're greeted with a bunch of SSL traffic. OK, great, we ha
 
 Well, maybe. But if you can, I don't know how. The only SSL trick I know is the secret log file, which our key and nonce clearly are not.
 
-So, what do we do? It was at this moment, that I, being the idiot that I am, made the mistake of trying to do the decryption by hand.
+So, what do we do? It was at this moment that I made the mistake of trying to do the decryption by hand.
 
 To get started, I wrote a quick python script that would decrypt a file given to it:
 
@@ -107,9 +107,11 @@ I tried decrypting the data this way by copy pasting the bytes directly from wir
 
 Notably, this seems to give us a password, `R(3/[V*H}'(;5pax`, that will likely be used later.
 
-If you're familiar with TLS/SSL, you might be a little confused at this point - this isn't how SSL works! And you'd be right - though I didn't notice at the time, the "SSL" traffic here isn't actually SSL traffic - Wireshark just thinks it is because it's port 443. In reality, it's the raw secretbox encrypted data being sent by the implant.
+Additionally, because we were able to decrypt something successfully, this means that our key and nonce must be correct. Otherwise, decryption would fail because secretbox is a type of authenticated encryption, meaning it has a mechanism to detect if a ciphertext has been modified or not.
 
-Now, however, I got stuck. Any other things I attempted to decrypt would simply fail. This is because secretbox is a type of authenticated encryption, meaning it has a mechanism to detect if a ciphertext has been modified or not.
+If you're familiar with TLS/SSL, you might be a little confused at this point - this isn't how SSL works! And you'd be right - though I didn't notice at the time, the "SSL" traffic here isn't actually SSL traffic - Wireshark just thinks it is because it's port 443. In reality, it's the raw secretbox encrypted data being sent by the implant. In Wireshark, you can right click on a TLS packet, go to Protocol Preferences, and then select "Disable TLS" to stop Wireshark from thinking the data is TLS encrypted, which makes the packet capture easier to analyze.
+
+Now, however, I got stuck. Any other things I attempted to decrypt would simply fail.
 
 So, how do we proceed now? I figured that I was doing something dumb while decrypting (which, as you'll see later, I was), so I attempted to figure out how to decrypt without actually performing the authentication.
 
@@ -162,7 +164,7 @@ f.write(sxor(data, keystream))
 f.close()
 ```
 
-With this new script, we can perform decryption of a truncated plaintext. Notably, if we decrypt the first few bytes of a ciphertext block, we can check to see if it is a valid protobuf header, and if so, we can find the length of the entire ciphertext using [protobuf-inspector](https://github.com/mildsunrise/protobuf-inspector), which will tell us the length of the full ciphertext. You'll have to modify the source code right before the failed assertion to have it print out the length.
+With this new script, we can perform decryption of a truncated plaintext. Notably, if we decrypt the first few bytes of a ciphertext block, we can check to see if it is a valid protobuf header, and if so, we can find the length of the entire ciphertext using [protobuf-inspector](https://github.com/mildsunrise/protobuf-inspector), which will tell us the length of the full ciphertext. You'll have to modify the source code right before the failed assertion to have it print out the length. I made the assumption that a ciphertext block would only start at the beginning of a packet, which turned out to be correct.
 
 By doing so, we find three more interesting ciphertext blobs: one starting at packet 13, one starting at packet 97, and another starting at packet 387.
 
@@ -202,7 +204,7 @@ So maybe I can append the red word to the password I randomly generated.
 I think that should be pretty strong.
 ```
 
-Okay - this is pretty interesting. He mentions a randomly generated password - it's likely that this is the same password that is shown in the png we recovered way in the beginning - `R(3/[V*H}'(;5pax`! Next, he mentions a wordlist, and in particular picks the "red one" ~~like a filthy communist~~. We don't know what this word list is, but it's likely that it will come up later.
+Okay - this is pretty interesting. He mentions a randomly generated password - it's likely that this is the same password that is shown in the PNG we recovered way in the beginning - `R(3/[V*H}'(;5pax`! Next, he mentions a wordlist, and in particular picks the "red one". We don't know what this word list is, but it's likely that it will come up later.
 
 ### New pcap
 
@@ -222,9 +224,9 @@ First, let's look through the HTTP files through **File -> Export Objects -> HTT
 
 We see that the victim creates a note at `https://anotepad.com/notes/54dsnxwy`. Unfortunately, when we try to visit it, it looks like it's been deleted. I spent some time trying to figure out what to do.
 
-Of course, it turns out this was another pepega moment, because the pcap itself has a GET request for the note! We then extract the file, yielding [wordlist.html](./wordlist.html).
+Of course, it turns out I was overthinking things, because the pcap itself has a GET request for the note! We then extract the file, yielding [wordlist.html](./wordlist.html).
 
-Opening up the html file, we see that it's the wordlist we want! There's even the ~~communist~~ red word - `annoyed`. With this, we have the complete password: `R(3/[V*H}'(;5paxannoyed`.
+Opening up the html file, we see that it's the wordlist we want! There's even the red word - `annoyed`. With this, we have the complete password: `R(3/[V*H}'(;5paxannoyed`.
 
 ### The mystery file, revisited
 
@@ -248,7 +250,7 @@ Okay - we're at the final stretch. We just need to decrypt the Veracrypt volume 
 
 Usually, whenever a question is asked like this, the answer is usually "it's not that simple".
 
-I copied the password into Veracrypt and attempted to decrypt. I eagerly waited for the volume to decrypt and finally - after so many pepega moments - finish the challenge.
+I copied the password into Veracrypt and attempted to decrypt. I eagerly waited for the volume to decrypt and finish the challenge.
 
 Well, you can probably see where I'm going with this. It didn't work.
 
@@ -256,7 +258,7 @@ So, here's an interesting story. Throughout this challenge, I've been using pyth
 
 So, I copy pasted the password from my python IDLE into Veracrypt when I tried to decrypt the volume. And you see the single quote in `R(3/[V*H}'(;5paxannoyed`? Well, it turns out I had put a backslash there in python to escape the single quote, and that backslash was still there when I copy pasted it...
 
-Finally, after many pepega moments, I typed in the actual password into Veracrypt, and got the flag.
+Finally, I typed in the actual password into Veracrypt, and got the flag.
 
 ## Flag
 
